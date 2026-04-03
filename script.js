@@ -141,11 +141,11 @@ function setLang(lang) {
 
 // ─── RATES DATA ───
 const rates = {
-  BTC: { price: 3998000, change: 2.34, reserve: '2.45 BTC', icon: '₿', cls: 'btc' },
-  ETH: { price: 158500, change: 1.87, reserve: '45.2 ETH', icon: 'Ξ', cls: 'eth' },
-  USDT: { price: 41.20, change: 0.05, reserve: '450,000 ₴', icon: '₮', cls: 'usdt' },
-  BNB: { price: 23800, change: -1.12, reserve: '120 BNB', icon: 'B', cls: 'bnb' },
-  SOL: { price: 7800, change: 4.56, reserve: '380 SOL', icon: 'S', cls: 'sol' },
+  BTC:  { price: 2959900, change: -0.37, reserve: '2.45 BTC',    icon: '₿', cls: 'btc'  },
+  ETH:  { price: 86620,   change: -0.23, reserve: '45.2 ETH',    icon: 'Ξ', cls: 'eth'  },
+  USDT: { price: 43.03,   change: -0.01, reserve: '450,000 ₴',   icon: '₮', cls: 'usdt' },
+  BNB:  { price: 26594,   change:  0.15, reserve: '120 BNB',     icon: 'B', cls: 'bnb'  },
+  SOL:  { price: 3556,    change: -0.60, reserve: '380 SOL',     icon: 'S', cls: 'sol'  },
 };
 
 const coinIcons = { BTC: { icon: '₿', cls: 'btc' }, ETH: { icon: 'Ξ', cls: 'eth' }, USDT: { icon: '₮', cls: 'usdt' }, BNB: { icon: 'B', cls: 'bnb' }, SOL: { icon: 'S', cls: 'sol' }, UAH: { icon: '₴', cls: 'uah' } };
@@ -283,7 +283,7 @@ function _animateInput(el, hasValue) {
 }
 
 function updateExchangeUI(from, to, fromAmt, toAmt) {
-  const usdRate = 41.2;
+  const usdRate = 43.03;
   const spread  = 0.988;
 
   // USD equivalents
@@ -366,7 +366,7 @@ function startExchange() {
   }
 
   // Pre-fill order modal
-  const usdRate = 41.2;
+  const usdRate = 43.03;
   const toUSD   = to === 'UAH' ? toAmt / usdRate : toAmt * (rates[to]?.price || 0) / usdRate;
   const isAuto  = toUSD <= 3000;
 
@@ -438,7 +438,7 @@ function submitOrder() {
   const toAmt   = parseFloat(document.getElementById('toAmount').value);
   const fmtFrom = from === 'UAH' ? '₴' + fromAmt.toFixed(2) : fromAmt.toFixed(8).replace(/\.?0+$/,'') + ' ' + from;
   const fmtTo   = to   === 'UAH' ? '₴' + toAmt.toFixed(2)   : toAmt.toFixed(8).replace(/\.?0+$/,'') + ' ' + to;
-  const usdRate = 41.2;
+  const usdRate = 43.03;
   const toUSD   = to === 'UAH' ? toAmt / usdRate : toAmt * (rates[to]?.price || 0) / usdRate;
   const isAuto  = toUSD <= 3000;
 
@@ -1039,7 +1039,7 @@ function renderWalletOverview() {
   Object.keys(rates).forEach(sym => {
     totalUAH += (bal[sym] || 0) * rates[sym].price;
   });
-  const totalUSD = totalUAH / 41.2;
+  const totalUSD = totalUAH / 43.03;
 
   document.getElementById('wallet-total-uah').textContent = '₴' + totalUAH.toLocaleString('uk-UA', {minimumFractionDigits:2, maximumFractionDigits:2});
   document.getElementById('wallet-total-usd').textContent = '≈ $' + totalUSD.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' USD';
@@ -1327,22 +1327,133 @@ const observer = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-// ─── PRICE ANIMATION (simulated) ───
-function animatePrices() {
-  Object.keys(rates).forEach(sym => {
-    const jitter = (Math.random() - 0.5) * 0.001;
-    rates[sym].price = Math.round(rates[sym].price * (1 + jitter));
-  });
-  calcExchangeNow('from');
-  updateRatesTable();
-  buildTicker();
+// ─── LIVE RATES (CoinGecko API) ───
+
+const COINGECKO_IDS = {
+  BTC:  'bitcoin',
+  ETH:  'ethereum',
+  USDT: 'tether',
+  BNB:  'binancecoin',
+  SOL:  'solana',
+};
+
+let _apiFailCount    = 0;       // лічильник помилок поспіль
+let _lastFetchTime   = 0;       // мітка часу останнього успішного фетча
+let _fetchInterval   = null;
+
+// Стан індикатора в хедері таблиці
+function setRateStatus(status) {
+  const el     = document.getElementById('rate-status');
+  const badge  = document.getElementById('widget-rate-badge');
+  const map = {
+    loading: { text: '⏳ Оновлення...',  color: 'var(--muted)',   badge: '⏳ Завантаження...' },
+    live:    { text: '🟢 Live',           color: 'var(--accent)',  badge: null },
+    error:   { text: '🟡 Кеш',           color: 'var(--gold)',    badge: '🟡 Кеш курс' },
+    offline: { text: '🔴 Офлайн',        color: 'var(--danger)',  badge: '🔴 Офлайн' },
+  };
+  const s = map[status] || map.error;
+  if (el) { el.textContent = s.text; el.style.color = s.color; }
+  if (badge) {
+    if (status === 'live') {
+      const now  = new Date();
+      const time = now.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+      badge.textContent = `🟢 Live · оновлено ${time}`;
+      badge.style.color = 'var(--accent)';
+    } else if (s.badge) {
+      badge.textContent = s.badge;
+      badge.style.color = s.color;
+    }
+  }
+}
+
+async function fetchLiveRates() {
+  const ids = Object.values(COINGECKO_IDS).join(',');
+  const url  = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=uah&include_24hr_change=true`;
+
+  setRateStatus('loading');
+
+  try {
+    const res  = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    // Оновлюємо rates
+    Object.entries(COINGECKO_IDS).forEach(([sym, id]) => {
+      if (data[id]) {
+        rates[sym].price  = Math.round(data[id].uah * 100) / 100;
+        rates[sym].change = Math.round((data[id].uah_24h_change || 0) * 100) / 100;
+      }
+    });
+
+    _apiFailCount  = 0;
+    _lastFetchTime = Date.now();
+    setRateStatus('live');
+
+    // Оновлюємо UI
+    updateRatesTable();
+    buildTicker();
+    calcExchangeNow('from');
+
+    // Зберігаємо кеш
+    try {
+      localStorage.setItem('swapua_rates_cache', JSON.stringify({
+        ts: _lastFetchTime,
+        rates: Object.fromEntries(
+          Object.entries(rates).map(([k,v]) => [k, { price: v.price, change: v.change }])
+        )
+      }));
+    } catch (_) {}
+
+  } catch (err) {
+    _apiFailCount++;
+    console.warn('[SwapUA] Rates fetch failed:', err.message);
+
+    if (_apiFailCount >= 3) {
+      setRateStatus('offline');
+    } else {
+      setRateStatus('error');
+      // Невелике симульоване коливання щоб калькулятор не завис
+      Object.keys(rates).forEach(sym => {
+        const jitter = (Math.random() - 0.5) * 0.0005;
+        rates[sym].price = Math.round(rates[sym].price * (1 + jitter) * 100) / 100;
+      });
+      updateRatesTable();
+      buildTicker();
+      calcExchangeNow('from');
+    }
+  }
+}
+
+// Завантажуємо кеш при старті (щоб не мигало при повторному відкритті)
+function loadCachedRates() {
+  try {
+    const raw = localStorage.getItem('swapua_rates_cache');
+    if (!raw) return false;
+    const cached = JSON.parse(raw);
+    const age    = Date.now() - cached.ts;
+    if (age > 60 * 60 * 1000) return false; // кеш старіший 1 год — ігноруємо
+    Object.entries(cached.rates).forEach(([sym, v]) => {
+      if (rates[sym]) {
+        rates[sym].price  = v.price;
+        rates[sym].change = v.change;
+      }
+    });
+    setRateStatus('error'); // покажемо "Кеш" поки не прийде свіже
+    return true;
+  } catch (_) { return false; }
 }
 
 // ─── INIT ───
 buildTicker();
 updateRatesTable();
 calcExchangeNow('from');
-setInterval(animatePrices, 5000);
+
+// Стартуємо з кешу миттєво, потім тягнемо свіже
+loadCachedRates();
+fetchLiveRates();
+
+// Оновлення кожні 30 секунд
+_fetchInterval = setInterval(fetchLiveRates, 30000);
 
 // Restore session on page load
 (function restoreSession() {
