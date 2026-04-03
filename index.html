@@ -83,7 +83,7 @@
     <div class="exchange-card" id="exchange-widget">
       <div class="card-title">
         <span data-i18n="widget_title">Обміняти зараз</span>
-        <span class="card-badge" data-i18n="widget_badge">Онлайн ✓</span>
+        <span class="card-badge" id="widget-rate-badge">⏳ Завантаження курсу...</span>
       </div>
 
       <div class="swap-field">
@@ -139,7 +139,7 @@
       <div class="rate-info" style="flex-direction:column;gap:8px;align-items:stretch">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span class="rate-label" data-i18n="rate_label">Курс обміну:</span>
-          <span class="rate-val" id="rateDisplay">1 BTC = 3,998,000 UAH</span>
+          <span class="rate-val" id="rateDisplay">1 BTC = 2 959 900 UAH</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:12px">
           <span style="color:var(--muted)">Ви відправляєте точно:</span>
@@ -207,6 +207,10 @@
     <div class="section-header">
       <div class="section-tag" data-i18n="rates_tag">Актуальні курси</div>
       <h2 data-i18n="rates_title">Популярні напрямки обміну</h2>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:10px;flex-wrap:wrap">
+        <span id="rate-status" style="font-size:12px;font-weight:600;color:var(--muted);transition:color 0.3s">⏳ Завантаження...</span>
+        <span style="font-size:11px;color:var(--muted)">Джерело: CoinGecko · Оновлення кожні 30 сек</span>
+      </div>
     </div>
     <div class="pairs-table">
       <table>
