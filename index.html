@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwapUA — Криптообмінник</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="aurora aurora-1"></div>
+<div class="aurora aurora-2"></div>
+
+<!-- HEADER -->
+<header>
+  <a href="#" class="logo">
+    <div class="logo-icon">⚡</div>
+    SwapUA
+  </a>
+
+  <nav>
+    <a href="#exchange" data-i18n="nav_exchange">Обмін</a>
+    <a href="#rates" data-i18n="nav_rates">Курси</a>
+    <a href="#how" data-i18n="nav_how">Як це працює</a>
+    <a href="#legal" data-i18n="nav_legal">Документи</a>
+  </nav>
+
+  <div class="header-right">
+    <div class="lang-switcher">
+      <button class="lang-btn active" onclick="setLang('uk')">УКР</button>
+      <button class="lang-btn" onclick="setLang('en')">ENG</button>
+    </div>
+    <button class="btn-primary" id="header-login-btn" onclick="openModal('login')" data-i18n="btn_login">Увійти</button>
+    <button class="btn-primary" id="header-reg-btn" style="background: linear-gradient(135deg, var(--accent2), #0066dd);" onclick="openModal('register')" data-i18n="btn_register">Реєстрація</button>
+
+    <!-- User menu (shown after login) -->
+    <div id="header-user-menu" style="display:none;align-items:center;gap:10px">
+      <button onclick="openWallet()" style="padding:8px 12px;background:rgba(0,119,255,0.1);border:1px solid rgba(0,119,255,0.25);border-radius:10px;color:var(--accent2);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:DM Sans,sans-serif" title="Гаманець">💼 Гаманець</button>
+      <div onclick="openCabinet()" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(0,229,160,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div id="header-avatar" class="user-avatar" style="width:30px;height:30px;font-size:11px;font-weight:800">??</div>
+        <span id="header-username" style="font-size:13px;font-weight:600;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">User</span>
+        <span id="header-role-badge" style="display:none;font-size:9px;background:rgba(255,77,109,0.2);color:#ff4d6d;padding:2px 6px;border-radius:4px;font-weight:700">ADMIN</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-inner" id="ticker">
+    <!-- JS fills -->
+  </div>
+</div>
+
+<main>
+  <!-- HERO -->
+  <section class="hero" id="exchange">
+    <div class="hero-left">
+      <div class="hero-label" data-i18n="hero_badge">🇺🇦 Офіційний криптообмінник України</div>
+      <h1 data-i18n-html="hero_title">Обмін крипто<span>валюти</span> в кілька кліків</h1>
+      <p class="hero-desc" data-i18n="hero_desc">Найвигідніші курси BTC, ETH, USDT з виведенням на Приват24, Monobank та картки Visa/Mastercard. Автоматичний обмін 24/7.</p>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-val">₴2.4B+</div>
+          <div class="stat-lbl" data-i18n="stat1">Обмінено коштів</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">98K+</div>
+          <div class="stat-lbl" data-i18n="stat2">Клієнтів</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">4.97★</div>
+          <div class="stat-lbl" data-i18n="stat3">Рейтинг</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXCHANGE WIDGET -->
+    <div class="exchange-card" id="exchange-widget">
+      <div class="card-title">
+        <span data-i18n="widget_title">Обміняти зараз</span>
+        <span class="card-badge" data-i18n="widget_badge">Онлайн ✓</span>
+      </div>
+
+      <div class="swap-field">
+        <label data-i18n="give">ВІДПРАВЛЯЄТЕ</label>
+        <div class="field-inner">
+          <input type="number" id="fromAmount" placeholder="0.00" oninput="calcExchange('from')" value="1">
+          <div class="currency-select">
+            <div class="coin-icon btc" id="fromIcon">₿</div>
+            <select id="fromCurrency" onchange="updateRate()">
+              <option value="BTC">BTC</option>
+              <option value="ETH">ETH</option>
+              <option value="USDT">USDT</option>
+              <option value="BNB">BNB</option>
+              <option value="SOL">SOL</option>
+              <option value="UAH">UAH</option>
+            </select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
+        <div class="field-balance" style="justify-content:space-between">
+          <span id="from-usd-equiv" style="color:var(--muted);font-size:11px">≈ $0.00</span>
+          <span style="color:var(--muted);font-size:11px" data-i18n="min_sum_hint">мін. $10</span>
+        </div>
+      </div>
+
+      <div class="swap-arrow-wrap">
+        <div class="swap-arrow" onclick="swapCurrencies()" title="Поміняти місцями">⇅</div>
+      </div>
+
+      <div class="swap-field">
+        <label data-i18n="get">ОТРИМУЄТЕ</label>
+        <div class="field-inner">
+          <input type="number" id="toAmount" placeholder="0.00" oninput="calcExchange('to')">
+          <div class="currency-select">
+            <div class="coin-icon uah" id="toIcon">₴</div>
+            <select id="toCurrency" onchange="updateRate()">
+              <option value="UAH">UAH</option>
+              <option value="BTC">BTC</option>
+              <option value="ETH">ETH</option>
+              <option value="USDT">USDT</option>
+              <option value="BNB">BNB</option>
+              <option value="SOL">SOL</option>
+            </select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
+        <div class="field-balance" style="justify-content:space-between">
+          <span id="to-usd-equiv" style="color:var(--muted);font-size:11px">≈ $0.00</span>
+          <span style="color:var(--gold);font-size:11px" id="feeDisplay">комісія ~1.2%</span>
+        </div>
+      </div>
+
+      <div class="rate-info" style="flex-direction:column;gap:8px;align-items:stretch">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="rate-label" data-i18n="rate_label">Курс обміну:</span>
+          <span class="rate-val" id="rateDisplay">1 BTC = 3,998,000 UAH</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px">
+          <span style="color:var(--muted)">Ви відправляєте точно:</span>
+          <span id="exact-send" style="color:var(--text);font-weight:600">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px">
+          <span style="color:var(--muted)">Ви отримаєте:</span>
+          <span id="exact-get" style="color:var(--accent);font-weight:600">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px">
+          <span style="color:var(--muted)">Режим обробки:</span>
+          <span id="mode-badge" style="font-weight:600;font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(0,229,160,0.12);color:var(--accent)">⚡ Авто</span>
+        </div>
+      </div>
+
+      <div class="fee-row"><span data-i18n="processing">Час обробки</span><span style="color:var(--accent)">~5 хв — 3 роб. дні</span></div>
+      <div class="fee-row"><span data-i18n="aml">AML-перевірка</span><span style="color:var(--gold)" data-i18n="included">Включено ✓</span></div>
+
+      <button class="submit-btn" onclick="startExchange()" data-i18n="btn_exchange">Обміняти зараз →</button>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features reveal" id="features">
+    <div class="section-header">
+      <div class="section-tag" data-i18n="why_tag">Чому ми</div>
+      <h2 data-i18n="why_title">Безпечно. Швидко. Вигідно.</h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(0,229,160,0.1)">🔒</div>
+        <h3 data-i18n="f1_title">AML/KYC захист</h3>
+        <p data-i18n="f1_desc">Автоматична перевірка кожної транзакції через Chainalysis та Crystal Blockchain. Ваші кошти завжди чисті.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(0,119,255,0.1)">⚡</div>
+        <h3 data-i18n="f2_title">Миттєвий обмін</h3>
+        <p data-i18n="f2_desc">Автоматичні угоди до $5,000 виконуються за 5-15 хвилин. Підтримуємо TRC-20 та ERC-20 для USDT.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(245,197,24,0.1)">📈</div>
+        <h3 data-i18n="f3_title">Найкращий курс</h3>
+        <p data-i18n="f3_desc">Курс формується на основі даних Binance та WhiteBIT з мінімальною націнкою 0.8-1.5%.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(0,229,160,0.1)">🏦</div>
+        <h3 data-i18n="f4_title">Українські банки</h3>
+        <p data-i18n="f4_desc">Виведення на Приват24, Monobank, ПУМБ, А-Банк. Поповнення через Visa/Mastercard.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(0,119,255,0.1)">🛡️</div>
+        <h3 data-i18n="f5_title">Холодне зберігання</h3>
+        <p data-i18n="f5_desc">95% резервів на холодних гаманцях з мультипідписом. 2FA для всіх акаунтів.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(245,197,24,0.1)">📋</div>
+        <h3 data-i18n="f6_title">Легальна робота</h3>
+        <p data-i18n="f6_desc">Зареєстровані в ЄС (Естонія). Відповідаємо вимогам AML/VASP Директиви ЄС 5AMLD/6AMLD.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RATES TABLE -->
+  <section class="pairs-section reveal" id="rates">
+    <div class="section-header">
+      <div class="section-tag" data-i18n="rates_tag">Актуальні курси</div>
+      <h2 data-i18n="rates_title">Популярні напрямки обміну</h2>
+    </div>
+    <div class="pairs-table">
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="th_pair">Пара</th>
+            <th data-i18n="th_buy">Купівля</th>
+            <th data-i18n="th_sell">Продаж</th>
+            <th data-i18n="th_change">Зміна 24г</th>
+            <th data-i18n="th_reserve">Резерв</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="ratesTable">
+          <!-- JS fills -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="steps-section reveal" id="how">
+    <div class="section-header">
+      <div class="section-tag" data-i18n="how_tag">Як це працює</div>
+      <h2 data-i18n="how_title">4 кроки до обміну</h2>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3 data-i18n="s1_title">Оберіть напрямок</h3>
+        <p data-i18n="s1_desc">Вкажіть яку валюту ви відправляєте та що хочете отримати</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3 data-i18n="s2_title">Вкажіть реквізити</h3>
+        <p data-i18n="s2_desc">Введіть адресу гаманця або номер картки для зарахування коштів</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3 data-i18n="s3_title">Відправте кошти</h3>
+        <p data-i18n="s3_desc">Переведіть вказану суму на наші реквізити, ми підтвердимо отримання</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <h3 data-i18n="s4_title">Отримайте гроші</h3>
+        <p data-i18n="s4_desc">Після підтвердження ви отримаєте кошти протягом 5-30 хвилин</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEGAL CHECKLIST -->
+  <section class="legal-section reveal" id="legal">
+    <div class="section-header">
+      <div class="section-tag" data-i18n="legal_tag">Checklist для бізнесу</div>
+      <h2 data-i18n="legal_title">Покроковий план запуску</h2>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('legal-tab')" data-i18n="tab_legal">⚖️ Юридична підготовка</button>
+      <button class="tab-btn" onclick="switchTab('tech-tab')" data-i18n="tab_tech">💻 Технічна реалізація</button>
+      <button class="tab-btn" onclick="switchTab('security-tab')" data-i18n="tab_security">🔐 Безпека</button>
+      <button class="tab-btn" onclick="switchTab('launch-tab')" data-i18n="tab_launch">🚀 Запуск</button>
+    </div>
+
+    <div id="legal-tab" class="tab-content active">
+      <div class="checklist">
+        <div class="check-item">
+          <div class="check-icon warn">⚠</div>
+          <div class="check-text">
+            <strong data-i18n="l1_title">Закон «Про віртуальні активи» — статус 2024</strong>
+            <span data-i18n="l1_desc">Закон № 2074-IX прийнятий, але не набрав чинності — для цього потрібні зміни до Податкового кодексу. Повноцінна регуляція очікується. Поки що криптовалюти в "сірій зоні" — ні заборонені, ні легалізовані.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon info">🇪🇺</div>
+          <div class="check-text">
+            <strong data-i18n="l2_title">Реєстрація в Естонії або Литві (рекомендовано)</strong>
+            <span data-i18n="l2_desc">Естонія: VASP-ліцензія від Finantsinspektsioon (~€3,500-5,000, 3-6 місяців). Литва: реєстрація VASP у FNTT (~€1,000-2,000). Обидва варіанти дозволяють легально обслуговувати клієнтів з України. Польща — альтернатива через реєстр VASP у KNF.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon warn">₴</div>
+          <div class="check-text">
+            <strong data-i18n="l3_title">Оподаткування для фізичних осіб (Україна)</strong>
+            <span data-i18n="l3_desc">Дохід від обміну крипто для фізосіб: ПДФО 18% + військовий збір 1.5% = 19.5% від прибутку. База — різниця між ціною продажу та купівлі крипти. Рекомендуємо ФОП 3 група (єдиний податок 5%) для легального проведення операцій через бізнес.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon done">✓</div>
+          <div class="check-text">
+            <strong data-i18n="l4_title">AML/KYC — обов'язкові вимоги</strong>
+            <span data-i18n="l4_desc">При ліцензії ЄС — обов'язкова KYC верифікація (паспорт + фото). Підключити AML-скринінг: Chainalysis, Crystal Blockchain або Elliptic. Перевіряти "брудну" крипто пов'язану з darknet/sanctions. Вести журнали транзакцій 5 років. CTR для операцій від €10,000.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon info">📄</div>
+          <div class="check-text">
+            <strong data-i18n="l5_title">Внутрішні документи</strong>
+            <span data-i18n="l5_desc">Розробити: Політику AML/CFT, KYC-процедури, Правила Сервісу, Політику конфіденційності (GDPR), Договір публічної оферти. Призначити AML-офіцера. Підписати договір з банком-партнером для фіатних операцій.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tech-tab" class="tab-content">
+      <div class="checklist">
+        <div class="check-item">
+          <div class="check-icon info">🏗️</div>
+          <div class="check-text">
+            <strong data-i18n="t1_title">Вибір архітектури: White Label vs власна розробка</strong>
+            <span data-i18n="t1_desc">White Label (BoxExchanger, Merkeleon): $2,000-8,000, запуск за 2-4 тижні. Власна розробка: від $50,000+, 6-12 місяців. Рекомендація: на старті — White Label рішення для перевірки бізнес-моделі, потім власна розробка.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon done">✓</div>
+          <div class="check-text">
+            <strong data-i18n="t2_title">Стек технологій</strong>
+            <span data-i18n="t2_desc">Backend: Laravel (PHP) або Node.js + TypeScript. Frontend: React.js / Next.js. БД: PostgreSQL + Redis (кешування курсів). Блокчейн: BitcoinCore, Geth (Ethereum), TRON Full Node. Платіжні шлюзи: WayForPay, LiqPay, Plata (UA). Хостинг: AWS Frankfurt або Hetzner (Фінляндія) для GDPR.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon done">✓</div>
+          <div class="check-text">
+            <strong data-i18n="t3_title">Модуль гаманців та резервів</strong>
+            <span data-i18n="t3_desc">Гарячі гаманці: 5-10% резервів для автоматичних виплат. Холодні гаманці: 90-95% резервів на апаратних гаманцях (Ledger/Trezor) з multisig 2-of-3. Підтримка мереж: BTC (SegWit), ETH (ERC-20), TRON (TRC-20), BNB Smart Chain. Автоматичне поповнення гарячих гаманців.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon info">💰</div>
+          <div class="check-text">
+            <strong data-i18n="t4_title">Курсоутворення та ліквідність</strong>
+            <span data-i18n="t4_desc">Підключити API: Binance, WhiteBIT, Bybit для отримання ринкових курсів (WebSocket). Додати спред 0.8-2% (залежно від обсягу). Для великих угод ($10K+) — ручний режим з OTC-деском. API агрегатор: CoinGecko або CoinMarketCap для резервних даних.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="security-tab" class="tab-content">
+      <div class="checklist">
+        <div class="check-item">
+          <div class="check-icon done">✓</div>
+          <div class="check-text">
+            <strong data-i18n="sec1_title">Двофакторна автентифікація (2FA)</strong>
+            <span data-i18n="sec1_desc">Обов'язкова 2FA для адмінів через TOTP (Google Authenticator). Рекомендована для клієнтів при виведенні від $500. Апаратні ключі (YubiKey) для серверного доступу. SMS-верифікація як резервний метод.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon done">✓</div>
+          <div class="check-text">
+            <strong data-i18n="sec2_title">Захист від DDoS та атак</strong>
+            <span data-i18n="sec2_desc">Cloudflare Pro/Business план (від $20/місяць) — DDoS L3/L4/L7. WAF (Web Application Firewall) для захисту від SQL-ін'єкцій та XSS. Rate limiting на API (max 100 req/хв на IP). Окремий сервер для адмін-панелі (whitelist IP). SSL/TLS 1.3 обов'язково.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon warn">🔑</div>
+          <div class="check-text">
+            <strong data-i18n="sec3_title">Управління приватними ключами</strong>
+            <span data-i18n="sec3_desc">Multisig схема: 2-of-3 підписи для виведення з холодних гаманців. Зберігання seed-фраз в HSM (Hardware Security Module) або розподілено між засновниками. Ніколи не зберігати ключі на онлайн-серверах. Щомісячний аудит гаманців.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon info">📊</div>
+          <div class="check-text">
+            <strong data-i18n="sec4_title">Моніторинг та аудит</strong>
+            <span data-i18n="sec4_desc">Система алертів: сповіщення при аномальних транзакціях (Telegram-бот). Логування всіх дій адмінів. Щоквартальний pentest від незалежної компанії. Програма Bug Bounty для пошуку вразливостей. Резервне копіювання БД щогодини.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="launch-tab" class="tab-content">
+      <div class="checklist">
+        <div class="check-item">
+          <div class="check-icon info">🎯</div>
+          <div class="check-text">
+            <strong data-i18n="la1_title">SEO для українського ринку</strong>
+            <span data-i18n="la1_desc">URL структура: /купити-btc-грн, /продати-usdt-trc20, /обмін-eth-на-гривню. Ключові слова: "криптообмінник Україна", "купити біткоін за гривню", "USDT TRC20 Приват24". Реєстрація в агрегаторах: BestChange, Obmify, Kurs.expert. Локальне SEO — Google Business Profile.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon done">✓</div>
+          <div class="check-text">
+            <strong data-i18n="la2_title">Агрегатори та моніторинги</strong>
+            <span data-i18n="la2_desc">Підключитися до BestChange (найбільший агрегатор в СНД/UA): реєстрація + верифікація резервів. Obmify, Сhanger.com, ExchangeSumo. Підтримувати актуальні курси через XML/JSON API feed кожні 30 секунд. Рейтинг залежить від відгуків — стимулювати клієнтів.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon done">✓</div>
+          <div class="check-text">
+            <strong data-i18n="la3_title">Маркетинг та партнерська програма</strong>
+            <span data-i18n="la3_desc">Реферальна програма: 0.3-0.5% від обсягу залученого клієнта. Telegram-канал з курсами та новинами. Партнерство з Ukrainian crypto-спільнотами (Cryptoukraine, UAH crypto). Google Ads на брендові та транзакційні запити. Бонус 50 грн за перший обмін.</span>
+          </div>
+        </div>
+        <div class="check-item">
+          <div class="check-icon warn">📞</div>
+          <div class="check-text">
+            <strong data-i18n="la4_title">Підтримка клієнтів</strong>
+            <span data-i18n="la4_desc">Live-chat на сайті (Intercom або Crisp). Telegram-бот для перевірки статусу угоди. Підтримка 24/7 або 9:00-22:00. SLA: відповідь протягом 15 хвилин. Публічна сторінка status.swapua.com для відстеження доступності сервісу.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="#" class="logo" style="text-decoration:none;">
+        <div class="logo-icon">⚡</div>
+        SwapUA
+      </a>
+      <p data-i18n="footer_desc">Ліцензований криптообмінник. Зареєстровано в Естонії (VASP ліцензія). Обслуговуємо клієнтів з України з 2022 року.</p>
+    </div>
+    <div class="footer-col">
+      <h4 data-i18n="footer_exchange">Обмін</h4>
+      <a href="#" data-i18n="fc1_1">Купити Bitcoin</a>
+      <a href="#" data-i18n="fc1_2">Купити USDT TRC-20</a>
+      <a href="#" data-i18n="fc1_3">Продати ETH</a>
+      <a href="#" data-i18n="fc1_4">BTC → Приват24</a>
+    </div>
+    <div class="footer-col">
+      <h4 data-i18n="footer_company">Компанія</h4>
+      <a href="#" data-i18n="fc2_1">Про нас</a>
+      <a href="#" data-i18n="fc2_2">AML Політика</a>
+      <a href="#" data-i18n="fc2_3">Угода користувача</a>
+      <a href="#" data-i18n="fc2_4">Партнерам</a>
+    </div>
+    <div class="footer-col">
+      <h4 data-i18n="footer_support">Підтримка</h4>
+      <a href="#" data-i18n="fc3_1">FAQ</a>
+      <a href="#" data-i18n="fc3_2">Telegram чат</a>
+      <a href="#" data-i18n="fc3_3">Статус сервісу</a>
+      <a href="#" data-i18n="fc3_4">Відгуки</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span data-i18n="footer_copy">© 2024 SwapUA OÜ. Реєстр Естонії. VASP ліцензія FVT000XXX</span>
+    <span data-i18n="footer_risk">Торгівля криптовалютами пов'язана з ризиками. 18+</span>
+  </div>
+</footer>
+
+<!-- ══════════════ MODAL: LOGIN ══════════════ -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('login')">×</button>
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px">🔐</div>
+      <h2 style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px" data-i18n="login_title">Увійти</h2>
+      <p style="font-size:13px;color:var(--muted);margin-top:4px" data-i18n="login_desc">Раді вас бачити знову!</p>
+    </div>
+    <div class="form-group">
+      <label data-i18n="email">Email</label>
+      <input type="email" id="login-email" placeholder="your@email.com" oninput="clearFormError('login-error')">
+    </div>
+    <div class="form-group" style="position:relative">
+      <label data-i18n="password">Пароль</label>
+      <input type="password" id="login-password" placeholder="••••••••" oninput="clearFormError('login-error')" onkeydown="if(event.key==='Enter')doLogin()">
+      <span onclick="togglePass('login-password',this)" style="position:absolute;right:14px;top:38px;cursor:pointer;color:var(--muted);font-size:16px;user-select:none">👁</span>
+    </div>
+    <div id="login-error" class="form-error" style="display:none"></div>
+    <button class="submit-btn" onclick="doLogin()" id="login-submit-btn" data-i18n="btn_login">Увійти</button>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">
+      Немає акаунту? <span onclick="switchModal('login','register')" style="color:var(--accent);cursor:pointer;font-weight:600">Зареєструватись</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: REGISTER ══════════════ -->
+<div class="modal-overlay" id="modal-register">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="closeModal('register')">×</button>
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px">🚀</div>
+      <h2 style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px" data-i18n="reg_title">Реєстрація</h2>
+      <p style="font-size:13px;color:var(--muted);margin-top:4px" data-i18n="reg_desc">Створіть акаунт та отримайте бонус ₴50</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label>Ім'я *</label>
+        <input type="text" id="reg-firstname" placeholder="Іван" oninput="clearFormError('reg-error')">
+      </div>
+      <div class="form-group">
+        <label>Прізвище *</label>
+        <input type="text" id="reg-lastname" placeholder="Петренко" oninput="clearFormError('reg-error')">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Email *</label>
+      <input type="email" id="reg-email" placeholder="your@email.com" oninput="clearFormError('reg-error')">
+    </div>
+    <div class="form-group">
+      <label>Номер телефону</label>
+      <input type="tel" id="reg-phone" placeholder="+380 XX XXX XX XX">
+    </div>
+    <div class="form-group" style="position:relative">
+      <label>Пароль * <span style="color:var(--muted);font-weight:400;font-size:11px">(мін. 8 символів, 1 велика, 1 цифра)</span></label>
+      <input type="password" id="reg-password" placeholder="••••••••" oninput="checkPasswordStrength(this.value);clearFormError('reg-error')">
+      <span onclick="togglePass('reg-password',this)" style="position:absolute;right:14px;top:38px;cursor:pointer;color:var(--muted);font-size:16px;user-select:none">👁</span>
+    </div>
+    <div id="pw-strength-bar" style="height:4px;border-radius:4px;background:var(--border);margin:-6px 0 12px;overflow:hidden">
+      <div id="pw-strength-fill" style="height:100%;width:0%;transition:width 0.3s,background 0.3s;border-radius:4px"></div>
+    </div>
+    <div class="form-group" style="position:relative">
+      <label>Підтвердити пароль *</label>
+      <input type="password" id="reg-password2" placeholder="••••••••" oninput="clearFormError('reg-error')" onkeydown="if(event.key==='Enter')doRegister()">
+      <span onclick="togglePass('reg-password2',this)" style="position:absolute;right:14px;top:38px;cursor:pointer;color:var(--muted);font-size:16px;user-select:none">👁</span>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-weight:400;text-transform:none;letter-spacing:0;font-size:12px;color:var(--muted)">
+        <input type="checkbox" id="reg-terms" style="margin-top:2px;accent-color:var(--accent)">
+        Я погоджуюсь з <span style="color:var(--accent);margin:0 3px;cursor:pointer">Умовами використання</span> та <span style="color:var(--accent);margin:0 3px;cursor:pointer">Політикою конфіденційності</span>
+      </label>
+    </div>
+    <div id="reg-error" class="form-error" style="display:none"></div>
+    <button class="submit-btn" onclick="doRegister()" id="reg-submit-btn">Зареєструватися 🎉</button>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">
+      Вже є акаунт? <span onclick="switchModal('register','login')" style="color:var(--accent);cursor:pointer;font-weight:600">Увійти</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: USER CABINET ══════════════ -->
+<div class="modal-overlay" id="modal-cabinet">
+  <div class="modal" style="max-width:540px">
+    <button class="modal-close" onclick="closeModal('cabinet')">×</button>
+    <div id="cabinet-content"></div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: ADMIN PANEL ══════════════ -->
+<div class="modal-overlay" id="modal-admin">
+  <div class="modal" style="max-width:700px;max-height:85vh;overflow-y:auto">
+    <button class="modal-close" onclick="closeModal('admin')">×</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+      <div style="width:44px;height:44px;background:linear-gradient(135deg,#ff4d6d,#c9184a);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px">🛡️</div>
+      <div>
+        <h2 style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.5px">Адмін-панель</h2>
+        <p style="font-size:12px;color:var(--muted)">База користувачів SwapUA</p>
+      </div>
+      <button onclick="exportUsers()" style="margin-left:auto;padding:8px 14px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);border-radius:10px;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer">⬇ Експорт JSON</button>
+    </div>
+    <div id="admin-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div>
+    <input type="text" id="admin-search" placeholder="🔍 Пошук по імені або email..." oninput="renderAdminTable()" style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none;margin-bottom:14px">
+    <div id="admin-table"></div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: ORDER FORM ══════════════ -->
+<div class="modal-overlay" id="modal-order">
+  <div class="modal" style="max-width:500px;max-height:92vh;overflow-y:auto;padding:0">
+
+    <!-- Header gradient -->
+    <div style="background:linear-gradient(135deg,#0d2137,#091420);border-radius:24px 24px 0 0;padding:28px 28px 24px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.2);border-radius:100px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px">
+            <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;animation:blink 1.5s infinite"></span>
+            Нова заявка
+          </div>
+          <h2 style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px">Заповніть форму заявки</h2>
+          <p style="font-size:12px;color:var(--muted);line-height:1.5">Вкажіть контактні дані та реквізити для отримання коштів</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('order')" style="position:static;flex-shrink:0">×</button>
+      </div>
+
+      <!-- Order summary strip -->
+      <div id="order-summary-strip" style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-top:16px;gap:8px;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Відправляєте</div>
+          <div id="ord-from" style="font-family:Syne,sans-serif;font-size:16px;font-weight:800;color:var(--text)">—</div>
+        </div>
+        <div style="font-size:22px;color:var(--muted)">→</div>
+        <div style="text-align:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Отримуєте</div>
+          <div id="ord-to" style="font-family:Syne,sans-serif;font-size:16px;font-weight:800;color:var(--accent)">—</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Курс</div>
+          <div id="ord-rate" style="font-size:12px;font-weight:600;color:var(--text)">—</div>
+        </div>
+        <div id="ord-mode-wrap" style="text-align:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Режим</div>
+          <div id="ord-mode" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:24px 28px">
+
+      <!-- Info box -->
+      <div style="background:rgba(245,197,24,0.06);border:1px solid rgba(245,197,24,0.2);border-radius:14px;padding:16px;margin-bottom:22px">
+        <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px">ℹ️ Умови обробки заявки</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.8">
+          Обмін працює в <strong style="color:var(--text)">автоматичному режимі</strong> за умови:
+          <ul style="margin:6px 0 6px 16px;list-style:disc">
+            <li>відправили <strong style="color:var(--accent)">точну суму</strong>, зазначену в заявці</li>
+            <li>сума <strong style="color:var(--accent)">не перевищує 3 000 USD/USDT</strong> в еквіваленті при отриманні</li>
+          </ul>
+          В інших випадках — <strong style="color:var(--text)">ручне опрацювання</strong> (у робочий час).
+        </div>
+        <div style="margin-top:12px;padding:10px 14px;background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.2);border-radius:10px">
+          <div style="font-size:12px;font-weight:700;color:#ff4d6d;margin-bottom:4px">⚠️ Увага!</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6">Гроші можуть зараховуватись на картки від <strong style="color:var(--text)">5 хвилин до 3 робочих днів!</strong></div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:16px;font-size:12px;color:var(--muted)">
+          <span>🕐 <strong style="color:var(--text)">Пн–Пт:</strong> 09:30–18:30</span>
+          <span>🚫 <strong style="color:var(--text)">Сб, Нд:</strong> вихідний</span>
+        </div>
+      </div>
+
+      <!-- Contact fields -->
+      <div style="font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Контактні дані</div>
+
+      <div class="form-group">
+        <label>Електронна пошта *</label>
+        <input type="email" id="ord-email" placeholder="your@email.com" oninput="clearFormError('ord-error')" style="background:var(--bg)">
+      </div>
+
+      <div class="form-group">
+        <label>Номер телефону *</label>
+        <div style="position:relative">
+          <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px">🇺🇦</span>
+          <input type="tel" id="ord-phone" placeholder="+380 XX XXX XX XX" oninput="clearFormError('ord-error')" style="padding-left:42px;width:100%;padding-top:12px;padding-bottom:12px;padding-right:14px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:DM Sans,sans-serif;font-size:14px;outline:none;transition:border-color 0.2s,box-shadow 0.2s" onfocus="this.style.borderColor='rgba(0,229,160,0.4)';this.style.boxShadow='0 0 0 3px rgba(0,229,160,0.06)'" onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+        </div>
+      </div>
+
+      <!-- Card number for receiving -->
+      <div style="font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;margin-top:4px">Реквізити для отримання</div>
+
+      <div class="form-group" id="ord-card-group">
+        <label id="ord-card-label">Номер банківської картки *</label>
+        <div style="position:relative">
+          <input type="text" id="ord-card" maxlength="19" placeholder="0000 0000 0000 0000" oninput="formatOrdCard(this);clearFormError('ord-error')" style="width:100%;padding:12px 44px 12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:Syne,sans-serif;font-size:16px;font-weight:600;letter-spacing:2px;outline:none;transition:border-color 0.2s,box-shadow 0.2s" onfocus="this.style.borderColor='rgba(0,229,160,0.4)';this.style.boxShadow='0 0 0 3px rgba(0,229,160,0.06)'" onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+          <div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;gap:4px">
+            <span style="background:#1a1f2e;border-radius:3px;padding:1px 5px;font-size:9px;color:#0070ba;font-weight:800">VISA</span>
+            <span style="background:#1a1f2e;border-radius:3px;padding:1px 5px;font-size:9px;color:#eb001b;font-weight:800">MC</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;padding:0 2px">Картка українського банку для зарахування коштів</div>
+      </div>
+
+      <!-- Crypto address (shown when receiving crypto) -->
+      <div class="form-group" id="ord-wallet-group" style="display:none">
+        <label id="ord-wallet-label">Адреса крипто-гаманця *</label>
+        <input type="text" id="ord-wallet" placeholder="0x... або bc1..." oninput="clearFormError('ord-error')" style="width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='rgba(0,229,160,0.4)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;padding:0 2px">Введіть адресу вашого гаманця для отримання крипти</div>
+      </div>
+
+      <div id="ord-error" class="form-error" style="display:none"></div>
+
+      <!-- Terms -->
+      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:18px;font-size:12px;line-height:1.7;color:var(--muted)">
+        Натискаючи кнопку «Почати обмін» я погоджуюся з
+        <a href="#" style="color:var(--accent);text-decoration:none;font-weight:600">Правилами користування сайтом</a>
+        та
+        <a href="#" style="color:var(--accent);text-decoration:none;font-weight:600">Політикою AML</a>,
+        а також
+        <a href="#" style="color:var(--accent);text-decoration:none;font-weight:600">Політикою конфіденційності</a>.
+      </div>
+
+      <button onclick="submitOrder()" id="ord-submit-btn" style="width:100%;padding:16px;background:linear-gradient(135deg,var(--accent),#00c882);color:#080c14;border:none;border-radius:14px;font-family:Syne,sans-serif;font-size:16px;font-weight:800;cursor:pointer;transition:all 0.3s;letter-spacing:0.2px;position:relative;overflow:hidden">
+        <span>⚡ Почати обмін</span>
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: ORDER SUCCESS ══════════════ -->
+<div class="modal-overlay" id="modal-order-success">
+  <div class="modal" style="max-width:420px;text-align:center;padding:40px 32px">
+    <div style="width:72px;height:72px;background:linear-gradient(135deg,var(--accent),#00c882);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;animation:logoPulse 2s ease-in-out infinite">✓</div>
+    <h2 style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px">Заявку прийнято!</h2>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px" id="success-desc">Ваша заявка зареєстрована. Деталі надіслано на email.</p>
+
+    <div id="order-id-box" style="background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
+      <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Номер заявки</div>
+      <div id="order-id-val" style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:var(--accent);letter-spacing:1px">—</div>
+    </div>
+
+    <div id="order-details-box" style="background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:24px;text-align:left;font-size:13px;display:grid;gap:8px">
+    </div>
+
+    <button onclick="closeModal('order-success')" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),#00c882);color:#080c14;border:none;border-radius:12px;font-family:Syne,sans-serif;font-size:14px;font-weight:700;cursor:pointer">Закрити</button>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: WALLET ══════════════ -->
+<div class="modal-overlay" id="modal-wallet">
+  <div class="modal" style="max-width:620px;max-height:90vh;overflow-y:auto;padding:0">
+
+    <!-- Wallet Header -->
+    <div style="padding:28px 28px 0;position:sticky;top:0;background:var(--surface);z-index:10;border-radius:24px 24px 0 0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:44px;height:44px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px">💼</div>
+          <div>
+            <h2 style="font-family:Syne,sans-serif;font-size:19px;font-weight:800;letter-spacing:-0.5px">Мій гаманець</h2>
+            <p style="font-size:11px;color:var(--muted)" id="wallet-user-email">—</p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('wallet')" style="position:static">×</button>
+      </div>
+
+      <!-- Wallet Tabs -->
+      <div style="display:flex;gap:3px;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:0">
+        <button class="wtab active" onclick="switchWalletTab('overview')" style="flex:1;padding:8px;border:none;border-radius:9px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;background:rgba(0,229,160,0.12);color:var(--accent)">📊 Огляд</button>
+        <button class="wtab" onclick="switchWalletTab('topup')" style="flex:1;padding:8px;border:none;border-radius:9px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;background:transparent;color:var(--muted)">💳 Поповнити</button>
+        <button class="wtab" onclick="switchWalletTab('send')" style="flex:1;padding:8px;border:none;border-radius:9px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;background:transparent;color:var(--muted)">📤 Надіслати</button>
+        <button class="wtab" onclick="switchWalletTab('history')" style="flex:1;padding:8px;border:none;border-radius:9px;font-family:DM Sans,sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;background:transparent;color:var(--muted)">📋 Історія</button>
+      </div>
+    </div>
+
+    <div style="padding:20px 28px 28px">
+
+      <!-- ── TAB: OVERVIEW ── -->
+      <div id="wtab-overview" class="wtab-content">
+        <!-- Total Balance Card -->
+        <div style="background:linear-gradient(135deg,#0d2137,#0a1a2e);border:1px solid rgba(0,229,160,0.15);border-radius:20px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden">
+          <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(0,229,160,0.15),transparent);border-radius:50%"></div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Загальний баланс</div>
+          <div id="wallet-total-uah" style="font-family:Syne,sans-serif;font-size:36px;font-weight:800;letter-spacing:-1px;color:var(--text)">₴0.00</div>
+          <div id="wallet-total-usd" style="font-size:13px;color:var(--muted);margin-top:4px">≈ $0.00 USD</div>
+          <div style="display:flex;gap:10px;margin-top:18px">
+            <button onclick="switchWalletTab('topup')" style="flex:1;padding:10px;background:linear-gradient(135deg,var(--accent),#00c882);color:#080c14;border:none;border-radius:11px;font-family:Syne,sans-serif;font-size:13px;font-weight:700;cursor:pointer">+ Поповнити</button>
+            <button onclick="switchWalletTab('send')" style="flex:1;padding:10px;background:rgba(255,255,255,0.06);color:var(--text);border:1px solid var(--border);border-radius:11px;font-family:Syne,sans-serif;font-size:13px;font-weight:700;cursor:pointer">↑ Надіслати</button>
+          </div>
+        </div>
+
+        <!-- Coin Balances -->
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Активи</div>
+        <div id="wallet-coins-list" style="display:grid;gap:8px"></div>
+      </div>
+
+      <!-- ── TAB: TOP UP ── -->
+      <div id="wtab-topup" class="wtab-content" style="display:none">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:18px">Поповніть гаманець з банківської картки. Кошти надходять протягом декількох хвилин.</div>
+
+        <!-- Amount -->
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Сума поповнення (UAH)</label>
+          <div style="position:relative">
+            <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-family:Syne,sans-serif;font-size:20px;font-weight:700;color:var(--muted)">₴</span>
+            <input type="number" id="topup-amount" min="100" max="50000" placeholder="0" oninput="updateTopupPreview()" style="width:100%;padding:14px 14px 14px 38px;background:var(--bg);border:1px solid var(--border);border-radius:14px;color:var(--text);font-family:Syne,sans-serif;font-size:28px;font-weight:700;outline:none;transition:border 0.2s" onfocus="this.style.borderColor='rgba(0,229,160,0.4)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <!-- Quick amounts -->
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button onclick="setTopupAmount(500)"  class="quick-amt">₴500</button>
+            <button onclick="setTopupAmount(1000)" class="quick-amt">₴1 000</button>
+            <button onclick="setTopupAmount(2500)" class="quick-amt">₴2 500</button>
+            <button onclick="setTopupAmount(5000)" class="quick-amt">₴5 000</button>
+            <button onclick="setTopupAmount(10000)" class="quick-amt">₴10 000</button>
+          </div>
+        </div>
+
+        <!-- Currency to receive -->
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Отримати у валюті</label>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="topup-currency-picker">
+            <div class="curr-pick active" onclick="selectTopupCurrency(this,'UAH')" data-cur="UAH">
+              <div class="coin-icon uah" style="width:28px;height:28px;font-size:13px;margin:0 auto 6px">₴</div>
+              <div style="font-size:12px;font-weight:700">UAH</div><div style="font-size:10px;color:var(--muted)">Гривня</div>
+            </div>
+            <div class="curr-pick" onclick="selectTopupCurrency(this,'USDT')" data-cur="USDT">
+              <div class="coin-icon usdt" style="width:28px;height:28px;font-size:13px;margin:0 auto 6px">₮</div>
+              <div style="font-size:12px;font-weight:700">USDT</div><div style="font-size:10px;color:var(--muted)">Tether</div>
+            </div>
+            <div class="curr-pick" onclick="selectTopupCurrency(this,'BTC')" data-cur="BTC">
+              <div class="coin-icon btc" style="width:28px;height:28px;font-size:13px;margin:0 auto 6px">₿</div>
+              <div style="font-size:12px;font-weight:700">BTC</div><div style="font-size:10px;color:var(--muted)">Bitcoin</div>
+            </div>
+            <div class="curr-pick" onclick="selectTopupCurrency(this,'ETH')" data-cur="ETH">
+              <div class="coin-icon eth" style="width:28px;height:28px;font-size:13px;margin:0 auto 6px">Ξ</div>
+              <div style="font-size:12px;font-weight:700">ETH</div><div style="font-size:10px;color:var(--muted)">Ethereum</div>
+            </div>
+            <div class="curr-pick" onclick="selectTopupCurrency(this,'BNB')" data-cur="BNB">
+              <div class="coin-icon bnb" style="width:28px;height:28px;font-size:13px;margin:0 auto 6px">B</div>
+              <div style="font-size:12px;font-weight:700">BNB</div><div style="font-size:10px;color:var(--muted)">BNB Chain</div>
+            </div>
+            <div class="curr-pick" onclick="selectTopupCurrency(this,'SOL')" data-cur="SOL">
+              <div class="coin-icon sol" style="width:28px;height:28px;font-size:13px;margin:0 auto 6px">S</div>
+              <div style="font-size:12px;font-weight:700">SOL</div><div style="font-size:10px;color:var(--muted)">Solana</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div id="topup-preview" style="background:rgba(0,229,160,0.04);border:1px solid rgba(0,229,160,0.12);border-radius:14px;padding:14px;margin-bottom:18px;display:none">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+            <span style="color:var(--muted)">Сума поповнення</span><span id="prev-send">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+            <span style="color:var(--muted)">Комісія банку (1.5%)</span><span id="prev-fee" style="color:var(--gold)">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+            <span style="color:var(--muted)">Отримаєте</span><span id="prev-get" style="color:var(--accent);font-weight:700">—</span>
+          </div>
+          <div style="height:1px;background:var(--border);margin:8px 0"></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px">
+            <span style="color:var(--muted)">Час зарахування</span><span style="color:var(--accent)">~2-5 хвилин</span>
+          </div>
+        </div>
+
+        <!-- Card form -->
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+            💳 <span>Дані банківської картки</span>
+            <div style="margin-left:auto;display:flex;gap:6px">
+              <span style="background:#1a1f2e;border-radius:4px;padding:2px 6px;font-size:10px;color:#0070ba;font-weight:800">VISA</span>
+              <span style="background:#1a1f2e;border-radius:4px;padding:2px 6px;font-size:10px;color:#eb001b;font-weight:800">MC</span>
+              <span style="background:#1a1f2e;border-radius:4px;padding:2px 6px;font-size:10px;color:#f5c518;font-weight:800">PROSTIR</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px">
+            <label style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Номер картки</label>
+            <input type="text" id="card-number" maxlength="19" placeholder="0000 0000 0000 0000" oninput="formatCardNumber(this)" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:Syne,sans-serif;font-size:16px;font-weight:600;letter-spacing:2px;outline:none;transition:border 0.2s" onfocus="this.style.borderColor='rgba(0,229,160,0.4)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div>
+              <label style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Термін дії</label>
+              <input type="text" id="card-expiry" maxlength="5" placeholder="MM/YY" oninput="formatExpiry(this)" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:Syne,sans-serif;font-size:15px;font-weight:600;outline:none;transition:border 0.2s" onfocus="this.style.borderColor='rgba(0,229,160,0.4)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">CVV / CVC</label>
+              <input type="password" id="card-cvv" maxlength="3" placeholder="•••" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:Syne,sans-serif;font-size:15px;font-weight:600;outline:none;transition:border 0.2s" onfocus="this.style.borderColor='rgba(0,229,160,0.4)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Ім'я на картці</label>
+            <input type="text" id="card-name" placeholder="IVAN PETRENKO" oninput="this.value=this.value.toUpperCase()" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:Syne,sans-serif;font-size:14px;font-weight:600;letter-spacing:1px;outline:none;transition:border 0.2s" onfocus="this.style.borderColor='rgba(0,229,160,0.4)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+        </div>
+
+        <div id="topup-error" class="form-error" style="display:none"></div>
+        <button onclick="processTopup()" id="topup-btn" style="width:100%;padding:15px;background:linear-gradient(135deg,var(--accent),#00c882);color:#080c14;border:none;border-radius:13px;font-family:Syne,sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden">
+          <span id="topup-btn-text">💳 Поповнити гаманець</span>
+        </button>
+        <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--muted)">🔒 Захищено SSL/TLS · Дані картки не зберігаються</div>
+      </div>
+
+      <!-- ── TAB: SEND ── -->
+      <div id="wtab-send" class="wtab-content" style="display:none">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:18px">Надішліть крипту або гривню на зовнішній гаманець / картку.</div>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Валюта для відправлення</label>
+          <select id="send-currency" onchange="updateSendBalance()" style="width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:Syne,sans-serif;font-size:14px;font-weight:600;outline:none;cursor:pointer">
+            <option value="UAH">₴ UAH — Гривня</option>
+            <option value="USDT">₮ USDT — Tether</option>
+            <option value="BTC">₿ BTC — Bitcoin</option>
+            <option value="ETH">Ξ ETH — Ethereum</option>
+            <option value="BNB">B BNB</option>
+            <option value="SOL">S SOL — Solana</option>
+          </select>
+          <div id="send-available" style="font-size:12px;color:var(--muted);margin-top:6px;padding:0 4px"></div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Сума</label>
+          <input type="number" id="send-amount" placeholder="0.00" style="width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:Syne,sans-serif;font-size:20px;font-weight:700;outline:none;transition:border 0.2s" onfocus="this.style.borderColor='rgba(0,229,160,0.4)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px">Адреса / Номер картки отримувача</label>
+          <input type="text" id="send-address" placeholder="0x... або 5375 XXXX XXXX XXXX" style="width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;outline:none;transition:border 0.2s;word-break:break-all" onfocus="this.style.borderColor='rgba(0,229,160,0.4)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+
+        <div id="send-error" class="form-error" style="display:none"></div>
+        <button onclick="processSend()" style="width:100%;padding:15px;background:linear-gradient(135deg,var(--accent2),#0055cc);color:#fff;border:none;border-radius:13px;font-family:Syne,sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:all 0.3s">
+          📤 Надіслати
+        </button>
+      </div>
+
+      <!-- ── TAB: HISTORY ── -->
+      <div id="wtab-history" class="wtab-content" style="display:none">
+        <div id="wallet-history-list" style="display:grid;gap:8px"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL: TOPUP PROCESSING ══════════════ -->
+<div class="modal-overlay" id="modal-processing">
+  <div class="modal" style="max-width:360px;text-align:center;padding:40px 32px">
+    <div id="proc-icon" style="font-size:52px;margin-bottom:16px;animation:procSpin 1s linear infinite">⚡</div>
+    <h2 style="font-family:Syne,sans-serif;font-size:20px;font-weight:800;margin-bottom:8px" id="proc-title">Обробляємо платіж...</h2>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6" id="proc-desc">Перевіряємо дані картки та проводимо транзакцію. Будь ласка, зачекайте.</p>
+    <div id="proc-progress" style="height:4px;background:var(--border);border-radius:4px;margin-top:20px;overflow:hidden">
+      <div id="proc-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;transition:width 0.3s ease"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✅</span>
+  <span id="toastMsg">Успішно!</span>
+</div>
+
+
+<script src="script.js"></script>
+</body>
+</html>
